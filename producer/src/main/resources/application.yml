@@ -1,0 +1,21 @@
+spring:
+  profiles:
+    active: local
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  kafka:
+    topic:
+      name: "library-topic"
+      partitions: 3
+      replicas: 3
+    producer:
+      bootstrap-server: localhost:9092,localhost:9093,localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.IntegerSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    admin:
+      properties:
+        bootstrap-server: localhost:9092,localhost:9093,localhost:9094
+
