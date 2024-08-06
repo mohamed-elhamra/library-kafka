@@ -44,4 +44,21 @@ class LibraryEventControllerUnitTest {
 
         // THEN
     }
+
+    @Test
+    void postLibraryEvent_invalidValues() throws Exception {
+        // GIVEN
+        var json = objectMapper.writeValueAsString(TestUtil.libraryEventRecordWithInvalidBook());
+        when(libraryEventProducer.sendLibraryEvent_approach3(isA(LibraryEvent.class)))
+                .thenReturn(null);
+
+        // WHEN
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/v1/library")
+                        .content(json)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andExpect(status().is4xxClientError());
+
+        // THEN
+    }
 }
