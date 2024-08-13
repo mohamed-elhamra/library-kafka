@@ -13,13 +13,13 @@ public class LibraryEvent {
 
     @Id
     @GeneratedValue
-    Integer libraryEventId;
+    private Integer libraryEventId;
 
     @Enumerated(EnumType.STRING)
-    LibraryEventType libraryEventType;
+    private LibraryEventType libraryEventType;
 
     @OneToOne(mappedBy = "libraryEvent", cascade = CascadeType.ALL)
     @ToString.Exclude
-    Book book;
+    private Book book;
 
 }
