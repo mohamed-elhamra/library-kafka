@@ -1,8 +1,11 @@
 package com.library.consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.library.consumer.consumer.LibraryEventConsumer;
+import com.library.consumer.entity.Book;
 import com.library.consumer.entity.LibraryEvent;
+import com.library.consumer.entity.LibraryEventType;
 import com.library.consumer.repository.LibraryEventRepository;
 import com.library.consumer.service.LibraryEventService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -24,11 +27,11 @@ import org.springframework.test.context.TestPropertySource;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -57,6 +60,9 @@ public class LibraryEventConsumerIntegrationTest {
 
     @Autowired
     LibraryEventRepository libraryEventRepository;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     @Value("${spring.kafka.consumer.groupId}")
     String groupId;
@@ -96,6 +102,33 @@ public class LibraryEventConsumerIntegrationTest {
             assert libraryEvent.getLibraryEventId() != null;
             assertEquals(456, libraryEvent.getBook().getBookId());
         });
+    }
+
+    @Test
+    void publishUpdateLibraryEvent() throws InterruptedException, JsonProcessingException, ExecutionException {
+        // GIVEN
+        // Create a LibraryEvent
+        String json = "{\"libraryEventId\":null,\"libraryEventType\":\"NEW\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Mohamed\"}}";
+        LibraryEvent libraryEvent = objectMapper.readValue(json, LibraryEvent.class);
+        libraryEvent.getBook().setLibraryEvent(libraryEvent);
+        libraryEventRepository.save(libraryEvent);
+
+        // LibraryEvent to Update
+        Book updatedBook = Book.builder().
+                bookId(456).bookName("Kafka Using Spring Boot 2.x").bookAuthor("EL. Mohamed").build();
+        libraryEvent.setLibraryEventType(LibraryEventType.UPDATE);
+        libraryEvent.setBook(updatedBook);
+        String updatedJson = objectMapper.writeValueAsString(libraryEvent);
+
+        // WHEN
+        kafkaTemplate.sendDefault(libraryEvent.getLibraryEventId(), updatedJson).get();
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await(3, TimeUnit.SECONDS);
+
+        // THEN
+        LibraryEvent lbe = libraryEventRepository.findById(libraryEvent.getLibraryEventId()).get();
+        assertEquals("Kafka Using Spring Boot 2.x", lbe.getBook().getBookName());
+        assertEquals("EL. Mohamed", lbe.getBook().getBookAuthor());
     }
 
 }
