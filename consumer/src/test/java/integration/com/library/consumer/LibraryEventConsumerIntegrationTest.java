@@ -132,9 +132,9 @@ public class LibraryEventConsumerIntegrationTest {
     }
 
     @Test
-    void publish_update_library_event_when_id_is_null() throws InterruptedException, JsonProcessingException, ExecutionException {
+    void publish_update_library_event_when_id_is_999() throws InterruptedException, JsonProcessingException, ExecutionException {
         // GIVEN
-        String json = "{\"libraryEventId\":null,\"libraryEventType\":\"UPDATE\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Dilip\"}}";
+        String json = "{\"libraryEventId\":999,\"libraryEventType\":\"UPDATE\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Dilip\"}}";
 
         // WHEN
         kafkaTemplate.sendDefault(json).get();
