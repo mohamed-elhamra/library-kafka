@@ -3,6 +3,9 @@ spring:
     active: local
 server:
   port: 8081
+topics:
+  retry: 'library-topic.RETRY'
+  dlt: 'library-topic.DLT'
 ---
 spring:
   config:
