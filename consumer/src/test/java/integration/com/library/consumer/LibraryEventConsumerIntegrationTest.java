@@ -46,8 +46,10 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @EmbeddedKafka(topics = {"library-topic", "library-topic.RETRY", "library-topic.DLT"}, partitions = 3)
 // override application.yml config
-@TestPropertySource(properties = {"spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
-        "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}"})
+@TestPropertySource(properties = {
+        "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "retryListener.startup=false"})// set the autoStartup property to false
 public class LibraryEventConsumerIntegrationTest {
 
     @Autowired
@@ -148,7 +150,7 @@ public class LibraryEventConsumerIntegrationTest {
     }
 
     @Test
-    void publish_update_library_event_when_id_is_999() throws InterruptedException, JsonProcessingException, ExecutionException {
+    void publish_update_library_event_when_id_is_999_then_publish_to_retry_topic() throws InterruptedException, JsonProcessingException, ExecutionException {
         // GIVEN
         String json = "{\"libraryEventId\":999,\"libraryEventType\":\"UPDATE\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Dilip\"}}";
 
