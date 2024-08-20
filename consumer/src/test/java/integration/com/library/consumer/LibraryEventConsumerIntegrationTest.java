@@ -23,7 +23,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
@@ -101,7 +100,7 @@ public class LibraryEventConsumerIntegrationTest {
     }
 
     @Test
-    void publishNewLibraryEvent() throws InterruptedException, JsonProcessingException {
+    void publish_new_library_event_then_success() throws InterruptedException, JsonProcessingException {
         // GIVEN
         String json = " {\"libraryEventId\":null,\"libraryEventType\":\"NEW\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Mohamed\"}}";
 
@@ -123,7 +122,7 @@ public class LibraryEventConsumerIntegrationTest {
     }
 
     @Test
-    void publishUpdateLibraryEvent() throws InterruptedException, JsonProcessingException, ExecutionException {
+    void publish_update_library_event_then_success() throws InterruptedException, JsonProcessingException, ExecutionException {
         // GIVEN
         // Create a LibraryEvent
         String json = "{\"libraryEventId\":null,\"libraryEventType\":\"NEW\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Mohamed\"}}";
@@ -170,6 +169,30 @@ public class LibraryEventConsumerIntegrationTest {
         embeddedKafkaBroker.consumeFromAnEmbeddedTopic(consumer, retryTopic);
 
         ConsumerRecord<Integer, String> consumerRecord = KafkaTestUtils.getSingleRecord(consumer, retryTopic);
+        assertEquals(json, consumerRecord.value());
+    }
+
+    @Test
+    void publish_update_library_event_when_id_is_null_then_publish_to_dead_letter_topic() throws InterruptedException, JsonProcessingException, ExecutionException {
+        // GIVEN
+        String json = "{\"libraryEventId\":null,\"libraryEventType\":\"UPDATE\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Mohamed\"}}";
+
+        // WHEN
+        kafkaTemplate.sendDefault(json).get();
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await(5, TimeUnit.SECONDS);
+
+        // THEN
+        verify(libraryEventConsumer, times(1)).onMessage(isA(ConsumerRecord.class));
+        verify(libraryEventService, times(1)).processLibraryEvent(isA(ConsumerRecord.class));
+
+        // configure a consumer to get the record from the retry topic
+        Map<String, Object> configs = new HashMap<>(KafkaTestUtils.consumerProps("group2", "true", embeddedKafkaBroker));
+        configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        consumer = new DefaultKafkaConsumerFactory<>(configs, new IntegerDeserializer(), new StringDeserializer()).createConsumer();
+        embeddedKafkaBroker.consumeFromAnEmbeddedTopic(consumer, deadLetterTopic);
+
+        ConsumerRecord<Integer, String> consumerRecord = KafkaTestUtils.getSingleRecord(consumer, deadLetterTopic);
         assertEquals(json, consumerRecord.value());
     }
 

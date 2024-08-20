@@ -47,6 +47,7 @@ public class LibraryEventConsumerConfig {
 
     public DefaultErrorHandler errorHandler(){
         var exceptionToRetry = List.of(RecoverableDataAccessException.class);
+        var exceptionToIgnore = List.of(IllegalArgumentException.class);
 
         // Configure backoff
         var fixedBackOff = new FixedBackOff(1000L, 2);
@@ -55,10 +56,13 @@ public class LibraryEventConsumerConfig {
         expBackOff.setMultiplier(2.0); // Each subsequent retry will wait twice as long as the previous one.
         expBackOff.setMaxInterval(2_000L); // Maximum delay between retries to prevent excessively long waits
 
-        var errorHandler = new DefaultErrorHandler(publishingRecoverer(), expBackOff);
+        var errorHandler = new DefaultErrorHandler(publishingRecoverer(), fixedBackOff);
 
-        // add exception to retry
+        // add exceptions to retry
         exceptionToRetry.forEach(errorHandler::addRetryableExceptions);
+
+        // add exceptions to ignore
+        exceptionToIgnore.forEach(errorHandler::addNotRetryableExceptions);
 
         // set listener for each retry
         errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {

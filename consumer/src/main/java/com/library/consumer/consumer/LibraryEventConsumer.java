@@ -19,7 +19,7 @@ public class LibraryEventConsumer {
 
     @KafkaListener(topics = {"${spring.kafka.topic.name}"}, groupId = "library-events-listener-group")
     public void onMessage(ConsumerRecord<Integer, String> consumerRecord) throws JsonProcessingException {
-        log.info("ConsumerRecord : {}", consumerRecord);
+        log.info("ConsumerRecord in Library Consumer : {}", consumerRecord);
         libraryEventService.processLibraryEvent(consumerRecord);
     }
 

@@ -30,7 +30,7 @@ public class LibraryEventService {
         log.info("libraryEvent : {}", libraryEvent);
 
         // Simulate network issue exception. (We retry this exception)
-        if(libraryEvent != null && libraryEvent.getLibraryEventId() == 999)
+        if(libraryEvent != null && libraryEvent.getLibraryEventId() != null && libraryEvent.getLibraryEventId() == 999)
             throw new RecoverableDataAccessException("Temporary Network issue");
 
         switch (Objects.requireNonNull(libraryEvent).getLibraryEventType()){
