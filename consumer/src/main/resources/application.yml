@@ -22,10 +22,31 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.IntegerDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       groupId: library-events-listener-group
+########################################## SSL Configuration ##########################################
+#      ssl:
+#        trust-store-location: ./ssl-stuffs/secrets/kafka.consumer.truststore.jks
+#        trust-store-password: confluent
+#        key-store-location: ./ssl-stuffs/secrets/kafka.consumer.keystore.jk
+#        key-store-password: confluent
+#        properties:
+#          acks: all
+#          retries: 10
+#          retry.backoff.ms: 1000
+#          security:
+#            protocol: SSL
+#          ssl.endpoint.identification.algorithm:
+#########################################################################################################
     producer:
       bootstrap-server: localhost:9092,localhost:9093,localhost:9094
       key-serializer: org.apache.kafka.common.serialization.IntegerSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+########################################## SSL Configuration ##########################################
+#      ssl:
+#        trust-store-location: ./ssl-stuffs/secrets/kafka.producer.truststore.jks
+#        trust-store-password: confluent
+#        key-store-location: ./ssl-stuffs/secrets/kafka.producer.keystore.jks
+#        key-store-password: confluent
+#########################################################################################################
   datasource:
     url: jdbc:h2:mem:library-db
     driver-class-name: org.h2.Driver
