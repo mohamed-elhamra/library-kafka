@@ -6,6 +6,7 @@ import com.library.consumer.consumer.LibraryEventConsumer;
 import com.library.consumer.entity.Book;
 import com.library.consumer.entity.LibraryEvent;
 import com.library.consumer.entity.LibraryEventType;
+import com.library.consumer.repository.FailureRecordRepository;
 import com.library.consumer.repository.LibraryEventRepository;
 import com.library.consumer.service.LibraryEventService;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -69,6 +70,9 @@ public class LibraryEventConsumerIntegrationTest {
 
     @Autowired
     LibraryEventRepository libraryEventRepository;
+
+    @Autowired
+    FailureRecordRepository failureRecordRepository;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -194,6 +198,23 @@ public class LibraryEventConsumerIntegrationTest {
 
         ConsumerRecord<Integer, String> consumerRecord = KafkaTestUtils.getSingleRecord(consumer, deadLetterTopic);
         assertEquals(json, consumerRecord.value());
+    }
+
+    @Test
+    void publish_update_library_event_when_id_is_null_then_save_record_into_db_with_dead_status() throws InterruptedException, ExecutionException {
+        // GIVEN
+        String json = "{\"libraryEventId\":null,\"libraryEventType\":\"UPDATE\",\"book\":{\"bookId\":456,\"bookName\":\"Kafka Using Spring Boot\",\"bookAuthor\":\"Mohamed\"}}";
+
+        // WHEN
+        kafkaTemplate.sendDefault(json).get();
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await(5, TimeUnit.SECONDS);
+
+        // THEN
+        var count = failureRecordRepository.count();
+        assertEquals(1, count);
+
+        failureRecordRepository.findAll().forEach(System.out::println);
     }
 
 }
